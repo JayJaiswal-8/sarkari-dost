@@ -9,20 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "^14.3.0",
-    "react": "^18",
-    "react-dom": "^18",
-    "@supabase/supabase-js": "^2.39.0",
-    "@google/generative-ai": "^0.1.0",
-    "framer-motion": "^11.0.0",
-    "lucide-react": "^0.300.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.0",
-    "@cloudflare/next-on-pages": "^1.13.16"
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "@supabase/supabase-js": "latest",
+    "@google/generative-ai": "latest",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
+    "clsx": "latest",
+    "tailwind-merge": "latest",
+    "@cloudflare/next-on-pages": "latest"
   },
   "devDependencies": {
-    "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0"
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest"
   }
 }
