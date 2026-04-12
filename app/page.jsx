@@ -135,3 +135,18 @@ export default function SarkariDost() {
                     <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center text-blue-400 mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all"><Award size={28} /></div>
                     <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">{s.name}</h3>
                     <p className="text-slate-400 mb-8 leading-relaxed text-lg">{s.benefit}</p>
+                    <div className="bg-white/5 p-6 rounded-3xl mb-8 border border-white/5">
+                      <span className="font-bold block mb-2 text-blue-400 uppercase text-xs tracking-widest">How to Apply</span>
+                      <p className="text-slate-300 text-sm leading-relaxed">{s.action}</p>
+                    </div>
+                    <a href={s.link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-white text-slate-900 py-4 rounded-2xl font-black hover:bg-blue-50 transition-all">Apply Now <ExternalLink size={20} /></a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
