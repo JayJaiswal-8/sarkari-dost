@@ -172,7 +172,7 @@ export default function SarkariDost() {
                 ))}
               </div>
             )}
-          </motionCdiv>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
