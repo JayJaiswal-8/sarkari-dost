@@ -5,26 +5,19 @@ import {
   ArrowRight, ShieldCheck, Zap, Sparkles, 
   Globe, CheckCircle, User, MapPin, 
   Wallet, GraduationCap, Briefcase,
-  Award, ExternalLink, Loader2
+  Award, ExternalLink, Loader2, AlertCircle
 } from 'lucide-react';
 
-const SCHEMES_DATA = [
-  { id: 1, name: "PM-Kisan Samman Nidhi", benefit: "₹6,000 annual financial support for farmers.", action: "Register via PM-Kisan portal with Aadhaar.", link: "https://pmkisan.gov.in", criteria: { state: "all", profession: "Farmer", minAge: 18, maxIncome: 200000 } },
-  { id: 2, name: "Student Credit Card", benefit: "Low-interest loans up to ₹10 Lakhs for education.", action: "Apply through state education portal.", link: "https://education.gov.in", criteria: { state: "Bihar", profession: "Student", minAge: 16, maxIncome: 500000 } },
-  { id: 3, name: "Ujjwala Yojana", benefit: "Free LPG connection for women from BPL families.", action: "Visit nearest LPG distributor with Ration Card.", link: "https://pmuy.gov.in", criteria: { state: "all", category: "Women", minAge: 18, maxIncome: 100000 } },
-  { id: 4, name: "Kanya Sumangala Yojana", benefit: "Financial assistance for the girl child's education.", action: "Apply through ICDS portal with birth certificate.", link: "https://kanyasumangala.up.gov.in", criteria: { state: "Uttar Pradesh", category: "Women", minAge: 0, maxIncome: 300000 } },
-  { id: 5, name: "National Scholarship Portal", benefit: "Merit-based scholarships for students across India.", action: "Register on the NSP portal.", link: "https://scholarships.gov.in", criteria: { state: "all", profession: "Student", minAge: 10, maxIncome: 800000 } },
-];
-
 export default function SarkariDost() {
-  const [view, setView] = useState('landing'); 
+  const [view, setView] = useState('landing'); // landing | form | scanning | results
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({ state: '', age: '', income: '', category: '', profession: '' });
   const [matchedSchemes, setMatchedSchemes] = useState([]);
+  const [error, setError] = useState(null);
 
   const steps = [
     { id: 'state', label: 'Location', icon: <MapPin />, placeholder: 'e.g. Bihar, Maharashtra' },
-    { id: 'age', label: 'Age', icon: <User />, placeholder: 'e.g. 25', type: 'number' },
+    { id: 'age', label: 'Your Age', icon: <User />, placeholder: 'e.g. 25', type: 'number' },
     { id: 'income', label: 'Annual Income', icon: <Wallet />, placeholder: 'e.g. 150000', type: 'number' },
     { id: 'category', label: 'Category', icon: <GraduationCap />, placeholder: 'SC/ST/OBC/General' },
     { id: 'profession', label: 'Profession', icon: <Briefcase />, placeholder: 'e.g. Farmer, Student' },
@@ -35,24 +28,31 @@ export default function SarkariDost() {
     else handleAnalyze();
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     setView('scanning');
-    setTimeout(() => {
-      const filtered = SCHEMES_DATA.filter(s => {
-        const stateMatch = s.criteria.state === 'all' || s.criteria.state.toLowerCase() === formData.state.toLowerCase();
-        const profMatch = !s.criteria.profession || s.criteria.profession.toLowerCase() === formData.profession.toLowerCase();
-        const ageMatch = formData.age >= (s.criteria.minAge || 0);
-        const incomeMatch = formData.income <= (s.criteria.maxIncome || Infinity);
-        return stateMatch && profMatch && ageMatch && incomeMatch;
+    setError(null);
+
+    try {
+      const response = await fetch('/api/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userProfile: formData }),
       });
-      setMatchedSchemes(filtered);
+
+      if (!response.ok) throw new Error('AI Server is currently busy. Please try again.');
+      
+      const data = await response.json();
+      setMatchedSchemes(data.matchedSchemes || []);
       setView('results');
-    }, 3000);
+    } catch (e) {
+      setError(e.message);
+      setView('results');
+    }
   };
 
   return (
     <div className="relative min-h-screen bg-[#020617] text-white font-sans selection:bg-blue-500 overflow-x-hidden">
-      {/* BACKGROUND ARCHITECTURE */}
+      {/* CINEMATIC BACKGROUND */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-cover bg-center opacity-30 grayscale" style={{ backgroundImage: "url('/assets/hero-bg.jpg')" }} />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#020617] to-[#020617]" />
@@ -60,7 +60,7 @@ export default function SarkariDost() {
       </div>
 
       {/* FIXED NAVIGATION - Zero Overlap */}
-      <nav className="fixed top-0 w-full z-[100] px-6 py-4 flex justify-between items-center backdrop-blur-xl border-b border-white/10">
+      <nav className="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center backdrop-blur-xl border-b border-white/10">
         <div className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-3 cursor-pointer" onClick={() => setView('landing')}>
           <img src="/assets/emblem.png" alt="Emblem" className="w-7 h-7 md:w-9 md:h-9 object-contain" />
           <span className="uppercase tracking-tight">Sarkari<span className="text-blue-500">Dost</span></span>
@@ -71,10 +71,11 @@ export default function SarkariDost() {
       </nav>
 
       <AnimatePresence mode="wait">
+        {/* VIEW 1: LANDING */}
         {view === 'landing' && (
           <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 pt-32 pb-20 px-6 text-center">
             <div className="max-w-6xl mx-auto">
-              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="inline-flex items-center gap-2 bg-white/5 text-blue-400 px-4 py-2 rounded-full text-[10px] md:text-xs font-bold mb-8 border border-white/10 backdrop-blur-md uppercase tracking-widest">
+              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="inline-flex items-center gap-2 bg-white/5 text-blue-400 px-4 py-2 rounded-full text-xs font-bold mb-8 border border-white/10 backdrop-blur-md uppercase tracking-widest">
                 <Sparkles size={14} /> India's First AI Benefit Engine
               </motion.div>
               <h1 className="text-6xl md:text-9xl font-black tracking-tighter mb-8 leading-[0.8] uppercase">
@@ -88,28 +89,14 @@ export default function SarkariDost() {
               <button onClick={() => setView('form')} className="group relative px-10 py-5 bg-white text-black text-xl font-black rounded-full shadow-2xl hover:bg-blue-50 transition-all flex items-center gap-3 mx-auto">
                 Start Analysis <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
               </button>
-              <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {[
-                  { title: "Instant Matching", desc: "AI analyzes your profile against 1000+ schemes in milliseconds.", icon: <Zap size={32} />, color: "from-blue-600 to-blue-400" },
-                  { title: "Zero Middlemen", desc: "Direct official links. No bribes, no agents, no hidden fees.", icon: <ShieldCheck size={32} />, color: "from-green-600 to-green-400" },
-                  { title: "Pan-India Reach", desc: "From smallest villages to biggest cities, we cover every state.", icon: <Globe size={32} />, color: "from-orange-600 to-orange-400" },
-                ].map((f, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="p-10 rounded-[40px] bg-white/5 border border-white/10 backdrop-blur-xl hover:border-blue-500/50 transition-all group">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${f.color} flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform`}>
-                      {f.icon}
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-white">{f.title}</h3>
-                    <p className="text-slate-400 leading-relaxed text-lg">{f.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
             </div>
           </motion.div>
         )}
 
+        {/* VIEW 2: CONVERSATIONAL FORM */}
         {view === 'form' && (
           <motion.div key="form" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="relative z-10 min-h-screen flex items-center justify-center px-6 py-20">
-            <div className="max-w-2xl w-full bg-white/5 backdrop-blur-3xl p-8 md:p-20 rounded-[60px] border border-white/10 shadow-2xl text-center">
+            <div className="max-w-2xl w-full bg-white/5 backdrop-blur-3xl p-8 md:p-16 rounded-[60px] border border-white/10 shadow-2xl text-center">
               <div className="mb-12">
                 <div className="text-blue-500 font-bold text-xs uppercase tracking-widest mb-4">Step {step + 1} of {steps.length}</div>
                 <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-4 uppercase">{steps[step].label}</h2>
@@ -130,6 +117,7 @@ export default function SarkariDost() {
           </motion.div>
         )}
 
+        {/* VIEW 3: SCANNING */}
         {view === 'scanning' && (
           <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center">
             <div className="relative w-64 h-64 flex items-center justify-center">
@@ -138,10 +126,11 @@ export default function SarkariDost() {
               <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 15, ease: "linear" }} className="absolute inset-8 border-2 border-dashed border-indigo-500/30 rounded-full" />
             </div>
             <h2 className="text-4xl md:text-6xl font-black mt-12 mb-4 tracking-tighter uppercase">Scanning Portals...</h2>
-            <p className="text-slate-400 text-xl max-w-md">Cross-referencing your profile with National Portals and State Databases.</p>
+            <p className="text-slate-400 text-xl max-w-md">Our AI is searching the National Portal of India and State Databases in real-time.</p>
           </motion.div>
         )}
 
+        {/* VIEW 4: RESULTS */}
         {view === 'results' && (
           <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 min-h-screen py-24 px-6 max-w-7xl mx-auto">
             <div className="text-center mb-20">
@@ -151,7 +140,14 @@ export default function SarkariDost() {
               <h2 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter uppercase">Your <span className="text-blue-500">Benefits.</span></h2>
               <img src="/assets/flag.png" alt="India Flag" className="w-16 h-auto mx-auto mb-8 opacity-50" />
             </div>
-            {matchedSchemes.length === 0 ? (
+            {error ? (
+              <div className="text-center py-32 glass rounded-[60px] border border-dashed border-slate-700">
+                <AlertCircle size={64} className="mx-auto text-red-500 mb-6" />
+                <h3 className="text-3xl font-bold text-white mb-4">Analysis Failed</h3>
+                <p className="text-slate-400 mb-10 max-w-md mx-auto">{error}</p>
+                <button onClick={() => setView('form')} className="bg-white text-black px-10 py-4 rounded-2xl font-bold hover:bg-blue-50 transition-all">Try Again</button>
+              </div>
+            ) : matchedSchemes.length === 0 ? (
               <div className="text-center py-32 glass rounded-[60px] border border-dashed border-slate-700">
                 <AlertCircle size={64} className="mx-auto text-slate-600 mb-6" />
                 <h3 className="text-3xl font-bold text-white mb-4">No Exact Matches Found</h3>
@@ -176,17 +172,9 @@ export default function SarkariDost() {
                 ))}
               </div>
             )}
-          </motion.div>
+          </motionCdiv>
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function AlertCircle({ size, className }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
   );
 }
