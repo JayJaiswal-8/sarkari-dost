@@ -1,15 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     extend: {
       animation: {
-        'gradient': 'gradient 8s linear infinite',
+        'morph': 'morph 15s ease-in-out infinite',
+        'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
-        gradient: {
-          '0%, 100%': { 'background-position': '0% 50%' },
-          '50%': { 'background-position': '100% 50%' },
+        morph: {
+          '0%, 100%': { 'border-radius': '40% 60% 60% 40% / 40% 40% 60% 60%' },
+          '33%': { 'border-radius': '60% 40% 40% 60% / 60% 60% 40% 40%' },
+          '66%': { 'border-radius': '40% 60% 40% 60% / 40% 40% 60% 60%' },
         },
       },
     },
