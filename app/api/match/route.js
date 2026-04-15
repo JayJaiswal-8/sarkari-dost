@@ -1,62 +1,76 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../lib/supabase';
-import { getGeminiModel } from '../../../lib/gemini';
+import { getGeminiModel } from '@/lib/gemini';
 
-export const runtime = 'edge';
+export const runtime = 'edge'; // Ensures lightning-fast response globally
 
 export async function POST(req) {
   try {
     const { userProfile } = await req.json();
-    
-    // LAYER 1: Case-Insensitive Search (.ilike)
-    // This ensures "bihar", "BIHAR", and "Bihar" all work perfectly.
-    // The % symbols allow for partial matches (e.g., "Uttar" matches "Uttar Pradesh").
-    const { data: schemes, error } = await supabase
-      .from('schemes')
-      .select('*')
-      .ilike('state', `%${userProfile.state}%`);
 
-    if (error) throw error;
-
-    // LAYER 2: Fallback Logic
-    // If the state search returns nothing, we fetch ALL schemes.
-    // We do this so the AI can suggest "General India" schemes instead of showing a blank page.
-    let finalSchemes = schemes;
-    let isFallback = false;
-
-    if (!schemes || schemes.length === 0) {
-      const { data: allSchemes } = await supabase.from('schemes').select('*');
-      finalSchemes = allSchemes || [];
-      isFallback = true;
+    if (!userProfile) {
+      return NextResponse.json({ error: "User profile is missing." }, { status: 400 });
     }
 
-    // LAYER 3: The AI Intelligence
     const model = getGeminiModel();
-    const prompt = `
-      You are the "Sarkari Dost" AI Expert. 
-      User Profile: ${JSON.stringify(userProfile)}
-      Available Schemes: ${JSON.stringify(finalSchemes)}
-      
-      Context: ${isFallback ? "No state-specific schemes were found. Please find the best GENERAL India-wide schemes the user might qualify for." : "State-specific schemes were found. Filter the best ones for the user."}
 
-      Task: 
-      1. Analyze the user's age, income, category, and profession.
-      2. Select the top 3-6 most relevant schemes.
-      3. For each, provide:
-         - name_en: A clear, bold name.
-         - benefit_en: A high-impact sentence explaining the money/benefit.
-         - action_en: A simple, 1-step instruction on how to apply.
-         - link: The official URL.
+    // THE MASTER PROMPT: This is where the "Intelligence" happens.
+    // We force the AI to act as a professional researcher.
+    const prompt = `
+      You are the "Sarkari Dost" AI, the most authoritative expert on Indian Government Schemes.
       
-      Return ONLY a JSON array of objects. If absolutely nothing matches, return [].
+      USER PROFILE:
+      - State: ${userProfile.state}
+      - Age: ${userProfile.age}
+      - Annual Income: ₹${userProfile.income}
+      - Category: ${userProfile.category}
+      - Profession: ${userProfile.profession}
+
+      TASK:
+      1. Search your internal knowledge base for real, active government schemes (Central and State) that this specific user is eligible for.
+      2. Select the top 3-6 most impactful schemes.
+      3. For each scheme, provide the following in English:
+         - name_en: The official name of the scheme.
+         - benefit_en: A high-impact, 1-sentence explanation of the financial or social benefit.
+         - action_en: A clear, 1-step instruction on how to apply (e.g., "Visit the nearest CSC center" or "Apply via the official portal").
+         - link: The actual official .gov.in or .nic.in URL. If a direct link isn't available, provide the main portal link.
+
+      STRICT RULES:
+      - DO NOT invent schemes. Only provide real ones.
+      - If no specific match is found for the state, provide the best National (Central) schemes.
+      - Return the response ONLY as a valid JSON array of objects.
+      - No conversational text, no markdown, no "Here are the results." Just the JSON.
+
+      REQUIRED JSON FORMAT:
+      [
+        {
+          "name_en": "Scheme Name",
+          "benefit_en": "Benefit description",
+          "action_en": "How to apply",
+          "link": "https://..."
+        }
+      ]
     `;
-    
+
     const result = await model.generateContent(prompt);
-    const text = result.response.text().replace(/```json|```/g, "");
+    const responseText = result.response.text();
     
-    return NextResponse.json({ matchedSchemes: JSON.parse(text) });
-  } catch (e) {
-    console.error("AI Match Error:", e);
-    return NextResponse.json({ error: "Our AI is currently overloaded. Please try again in a moment." }, { status: 500 });
+    // CLEANING THE RESPONSE:
+    // AI sometimes wraps JSON in ```json ... ``` blocks. We strip those out.
+    const cleanJson = responseText.replace(/```json|```/g, "").trim();
+    
+    try {
+      const matchedSchemes = JSON.parse(cleanJson);
+      return NextResponse.json({ matchedSchemes });
+    } catch (parseError) {
+      console.error("JSON Parse Error:", cleanJson);
+      throw new Error("The AI returned an invalid format. Please try again.");
+    }
+
+  } catch (error) {
+    console.error("Sarkari Dost API Error:", error);
+    return NextResponse.json(
+      { error: "Our AI is currently analyzing thousands of records. Please try again in a few seconds." }, 
+      { status: 500 }
+    );
   }
 }
