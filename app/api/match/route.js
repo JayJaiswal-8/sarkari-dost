@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getGeminiModel } from '@/lib/gemini';
+// We use '../../../' to go back 3 levels from app/api/match/ to the root, then into lib/
+import { supabase } from '../../../lib/supabase';
+import { getGeminiModel } from '../../../lib/gemini';
 
-export const runtime = 'edge'; // Ensures lightning-fast response globally
+export const runtime = 'edge';
 
 export async function POST(req) {
   try {
@@ -11,10 +13,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "User profile is missing." }, { status: 400 });
     }
 
-    const model = getGeminiModel();
+    const model = getGem GeminiModel();
 
-    // THE MASTER PROMPT: This is where the "Intelligence" happens.
-    // We force the AI to act as a professional researcher.
     const prompt = `
       You are the "Sarkari Dost" AI, the most authoritative expert on Indian Government Schemes.
       
@@ -31,14 +31,13 @@ export async function POST(req) {
       3. For each scheme, provide the following in English:
          - name_en: The official name of the scheme.
          - benefit_en: A high-impact, 1-sentence explanation of the financial or social benefit.
-         - action_en: A clear, 1-step instruction on how to apply (e.g., "Visit the nearest CSC center" or "Apply via the official portal").
-         - link: The actual official .gov.in or .nic.in URL. If a direct link isn't available, provide the main portal link.
+         - action_en: A clear, 1-step instruction on how to apply.
+         - link: The actual official .gov.in or .nic.in URL.
 
       STRICT RULES:
       - DO NOT invent schemes. Only provide real ones.
-      - If no specific match is found for the state, provide the best National (Central) schemes.
       - Return the response ONLY as a valid JSON array of objects.
-      - No conversational text, no markdown, no "Here are the results." Just the JSON.
+      - No conversational text.
 
       REQUIRED JSON FORMAT:
       [
@@ -53,23 +52,19 @@ export async function POST(req) {
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    
-    // CLEANING THE RESPONSE:
-    // AI sometimes wraps JSON in ```json ... ``` blocks. We strip those out.
     const cleanJson = responseText.replace(/```json|```/g, "").trim();
     
     try {
       const matchedSchemes = JSON.parse(cleanJson);
       return NextResponse.json({ matchedSchemes });
     } catch (parseError) {
-      console.error("JSON Parse Error:", cleanJson);
-      throw new Error("The AI returned an invalid format. Please try again.");
+      throw new Error("AI returned invalid format.");
     }
 
   } catch (error) {
     console.error("Sarkari Dost API Error:", error);
     return NextResponse.json(
-      { error: "Our AI is currently analyzing thousands of records. Please try again in a few seconds." }, 
+      { error: "Our AI is currently analyzing records. Please try again in a few seconds." }, 
       { status: 500 }
     );
   }
