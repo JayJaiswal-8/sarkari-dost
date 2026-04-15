@@ -6,7 +6,7 @@ import {
   Globe, CheckCircle, User, MapPin, 
   Wallet, GraduationCap, Briefcase,
   Award, ExternalLink, AlertCircle
-} from 'lucide-//react'; // Note: If lucide-react gives error, use 'lucide-react'
+} from 'lucide-react'; // Note: If lucide-react gives error, use 'lucide-react'
 
 export default function SarkariDost() {
   const [view, setView] = useState('landing'); 
