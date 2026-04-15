@@ -5,11 +5,11 @@ import {
   ArrowRight, ShieldCheck, Zap, Sparkles, 
   Globe, CheckCircle, User, MapPin, 
   Wallet, GraduationCap, Briefcase,
-  Award, ExternalLink, Loader2, AlertCircle
-} from 'lucide-react';
+  Award, ExternalLink, AlertCircle
+} from 'lucide-//react'; // Note: If lucide-react gives error, use 'lucide-react'
 
 export default function SarkariDost() {
-  const [view, setView] = useState('landing'); // landing | form | scanning | results
+  const [view, setView] = useState('landing'); 
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({ state: '', age: '', income: '', category: '', profession: '' });
   const [matchedSchemes, setMatchedSchemes] = useState([]);
@@ -54,9 +54,9 @@ export default function SarkariDost() {
     <div className="relative min-h-screen bg-[#020617] text-white font-sans selection:bg-blue-500 overflow-x-hidden">
       {/* CINEMATIC BACKGROUND */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-cover bg-center opacity-30 grayscale" style={{ backgroundImage: "url('/assets/hero-bg.jpg')" }} />
+        <div className="absolute inset-0 bg-cover bg-center opacity-20 grayscale" style={{ backgroundImage: "url('/assets/hero-bg.jpg')" }} />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#020617] to-[#020617]" />
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
       </div>
 
       {/* FIXED NAVIGATION - Zero Overlap */}
@@ -157,7 +157,7 @@ export default function SarkariDost() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {matchedSchemes.map((s, i) => (
                   <motion.div key={i} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="glass p-10 rounded-[40px] border border-white/10 hover:border-blue-500/50 transition-all group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4"><div className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">AI Match</div></div>
+                    <div className="absolute top-0 right, p-4"><div className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">AI Match</div></div>
                     <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center text-blue-400 mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all"><Award size={32} /></div>
                     <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors uppercase tracking-tight">{s.name}</h3>
                     <p className="text-slate-400 mb-8 leading-relaxed text-lg">{s.benefit}</p>
