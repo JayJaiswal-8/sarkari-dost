@@ -13,7 +13,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "User profile is missing." }, { status: 400 });
     }
 
-    const model = getGem GeminiModel();
+    const model = getGeminiModel();
 
     const prompt = `
       You are the "Sarkari Dost" AI, the most authoritative expert on Indian Government Schemes.
